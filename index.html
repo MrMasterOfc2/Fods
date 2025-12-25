@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>බර සහ මිල ගණකය</title>
+    <meta name="theme-color" content="#3498db">
+    <meta name="mobile-web-app-capable" content="yes">
+    <style>
+        /* (පෙර ලබාදුන් Style සියල්ල මෙහි තිබිය යුතුය - ඉඩ ඉතිරි කර ගැනීමට කෙටියෙන් දක්වා ඇත) */
+        body { font-family: sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 15px; }
+        .container { width: 100%; max-width: 450px; }
+        .card, .history-card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); margin-bottom: 15px; }
+        input { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; margin-bottom: 10px; font-size: 16px; box-sizing: border-box;}
+        button { width: 100%; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; margin-top: 5px; }
+        .add-btn { background: #3498db; color: white; }
+        .clear-btn { background: #e74c3c; color: white; }
+        .result-box { background: #e8f5e9; padding: 15px; text-align: center; border-radius: 10px; margin-top: 10px; }
+        .history-list { list-style: none; padding: 0; max-height: 200px; overflow-y: auto; border-top: 1px solid #eee; }
+        .history-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="card">
+        <h2 style="text-align: center;">මිල ගණකය</h2>
+        <label>කිලෝවක මිල (රු.):</label>
+        <input type="number" id="pricePerKg" oninput="calculate()">
+        
+        <div style="display: flex; gap: 10px;">
+            <div style="flex:1;">
+                <label>කිලෝ (kg):</label>
+                <input type="number" id="kgInput" oninput="calculate()">
+            </div>
+            <div style="flex:1;">
+                <label>ග්‍රෑම් (g):</label>
+                <input type="number" id="gInput" oninput="calculate()">
+            </div>
+        </div>
+
+        <div class="result-box">
+            <div>දැනට මුදල:</div>
+            <div style="font-size: 24px; font-weight: bold; color: #27ae60;">රු. <span id="total">0.00</span></div>
+        </div>
+
+        <button class="add-btn" onclick="addToHistory()">ලැයිස්තුවට එක් කරන්න</button>
+        <button class="clear-btn" onclick="clearFields()">මකන්න</button>
+    </div>
+
+    <div class="history-card" id="historyCard" style="display: none;">
+        <h3>පෙර ගණනය කිරීම්</h3>
+        <ul id="historyList" class="history-list"></ul>
+        <div style="text-align: right; font-weight: bold; margin-top: 10px;">මුළු එකතුව: රු. <span id="grandTotal">0.00</span></div>
+        <button class="clear-btn" onclick="clearHistory()">History මකන්න</button>
+    </div>
+</div>
+
+<script>
+    let historyData = [];
+
+    function calculate() {
+        const pricePerKg = parseFloat(document.getElementById('pricePerKg').value) || 0;
+        const kg = parseFloat(document.getElementById('kgInput').value) || 0;
+        const g = parseFloat(document.getElementById('gInput').value) || 0;
+        const totalWeight = kg + (g / 1000);
+        const totalPrice = totalWeight * pricePerKg;
+        document.getElementById('total').innerText = totalPrice.toFixed(2);
+        return { pricePerKg, kg, g, totalPrice };
+    }
+
+    function addToHistory() {
+        const data = calculate();
+        if (data.totalPrice <= 0) return;
+        historyData.push(data.totalPrice);
+        const list = document.getElementById('historyList');
+        const item = document.createElement('li');
+        item.className = 'history-item';
+        item.innerHTML = `<span>${data.kg}kg ${data.g}g</span> <b>රු. ${data.totalPrice.toFixed(2)}</b>`;
+        list.prepend(item);
+        const grandTotal = historyData.reduce((a, b) => a + b, 0);
+        document.getElementById('grandTotal').innerText = grandTotal.toLocaleString('en-US', {minimumFractionDigits: 2});
+        document.getElementById('historyCard').style.display = 'block';
+        clearFields();
+    }
+
+    function clearFields() {
+        document.getElementById('kgInput').value = '';
+        document.getElementById('gInput').value = '';
+        document.getElementById('total').innerText = '0.00';
+    }
+
+    function clearHistory() {
+        historyData = [];
+        document.getElementById('historyList').innerHTML = '';
+        document.getElementById('historyCard').style.display = 'none';
+    }
+
+    // ඕෆ්ලයින් සේවාව සක්‍රීය කිරීම (Service Worker)
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js').catch(() => {});
+        });
+    }
+</script>
+</body>
+</html>
